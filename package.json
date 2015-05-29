@@ -1,0 +1,28 @@
+{
+  "name": "insist",
+  "version": "1.0.0",
+  "description": "Insist on types!",
+  "main": "index.js",
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "coffee-script": "^1.9.3",
+    "mocha": "^2.2.5"
+  },
+  "scripts": {
+    "test": "mocha --compilers coffee:coffee-script/register test.coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blakevanlan/insist.git"
+  },
+  "keywords": [
+    "type",
+    "assert"
+  ],
+  "author": "Blake VanLandingham",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blakevanlan/insist/issues"
+  },
+  "homepage": "https://github.com/blakevanlan/insist"
+}
