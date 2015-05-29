@@ -2,12 +2,12 @@
 Insist on types! Make your code more readable by explicitly requiring type for function parameters.
 
 ## Install
-```
+```bash
 npm install insist-types
 ```
 
 ## Basic Usage
-```
+```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1, arg2) {
@@ -15,8 +15,8 @@ var foo = function (arg1, arg2) {
    // ...
 };
 
-foo("hi", true); // works!
-foo("I'm", "wrong"); // throws error
+foo('hi', true); // works!
+foo('I'm', 'wrong'); // throws error
 ```
 
 ## More interesting stuff
@@ -24,7 +24,7 @@ Insist can understand multiple types, optional arguments, nullable types, typed 
 
 ### Multiple Types
 Just put the desired types in an array.
-```
+```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1) {
@@ -32,7 +32,7 @@ var foo = function (arg1) {
    // ...
 };
 
-foo("hi"); // works!
+foo('hi'); // works!
 foo(true); // works!
 foo({}); // works!
 foo(1); // throws error
@@ -41,7 +41,7 @@ foo(1); // throws error
 ### Optional Types
 Optional types are some what simple right now. You can really only have trailing optional arguments because the comparison isn't shifted as optional arguments are found. They need a little more love.
 
-```
+```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1, optionalArg2) {
@@ -67,12 +67,12 @@ var foo = function (arg1) {
 foo(); // works!
 foo(null); // works!
 foo(function () {}); // works!
-foo("wrong") // throws error
+foo('wrong') // throws error
 ```
 Both `insist.optional` and `insist.nullable` really just augment the type. In the above example, it would have worked to use `[Function, null]` instead of `insist.nullable`.
 
 ### Typed Arrays
-```
+```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1) {
@@ -83,10 +83,10 @@ var foo = function (arg1) {
 foo([]); // works!
 foo([1]); // works!
 foo([1, 2]); // works!
-foo([1, "2"]); // throws error
+foo([1, '2']); // throws error
 ```
 You can also nest arrays.
-```
+```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1) {
@@ -100,7 +100,7 @@ foo([1, [2, 3]]); // works!
 foo([1, [2, 3, [4]]]); // throws error
 ```
 To handle the last case, you can just use an array instead.
-```
+```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1) {
@@ -115,7 +115,7 @@ foo([1, [2, 3, [4]]]); // works!
 ```
 
 ### Classes
-```
+```javascript
 var insist = require('insist-types');
 
 function Bar() {};
@@ -129,10 +129,10 @@ foo(new Bar()); // works!
 foo({}); // throws error
 ```
 Sublasses work too!
-```
+```javascript
 var insist = require('insist-types');
-var util = require("util");
-var events = require("events");
+var util = require('util');
+var events = require('events');
 
 function Foo() {
    events.EventEmitter.call(this);
