@@ -49,8 +49,8 @@ ofType = function (value, type) {
       throw Error('Invalid type supplied.');   
    }  
    if (!isOfType(value, type)) {
-      argName = scope.getNameForValue(value);
-      typeName = scope.getNameForType(type);
+      argName = getNameForValue(value);
+      typeName = getNameForType(type);
       throw Error('Expected ' + argName + ' to be an instance of ' + typeName + '.');
    }
 };
