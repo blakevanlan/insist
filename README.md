@@ -146,3 +146,41 @@ var fn = function (arg1) {
 
 fn(new Foo()); // works!
 ```
+
+
+### Anything
+Sometimes it's handy to have a definition that'll take anything.
+```javascript
+var insist = require('insist-types');
+
+foo = function (arg1) {
+   insist.args(arguments, insist.anything());
+   // ...
+};
+
+foo(true); // works!
+foo("true"); // works!
+foo(1); // works!
+foo(["true"]); // works!
+foo({}); // works!
+```
+
+## Deloyment Note
+Currently, when the `NODE_ENV` is set to `production`, all of the asserts will actually be turned off for performance.
+
+## Full API
+```javascript
+
+insist.args(arguments, types...) // asserts the type of an arguments object
+insist.ofType(value, type) // asserts the type of a value
+insist.isType(type) // asserts that the supplied type is actually a type
+insist.isValidType(type) // returns true|false for whether the type is actually a type
+insist.isOptionalType(type) // returns true|flase for whether the type is an optional type
+insist.isOfType(value, type) // returns true|false for whether the value is of the type
+insist.getNameForType(type) // returns the name of the type
+insist.getNameForValue(value) // returns the name of the value (ex. String, Anonymous function)
+insist.arrayOf(type) // used for creating an array type
+insist.nullable(type) // used for creating a nullable type
+insist.optional() // used for creating an optional type
+insist.anything() // used for a type that can be anything
+```
