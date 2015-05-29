@@ -166,11 +166,10 @@ foo({}); // works!
 ```
 
 ## Deloyment Note
-Currently, when the `NODE_ENV` is set to `production`, all of the asserts will actually be turned off for performance.
+When the `NODE_ENV` is set to `production`, all of the asserts will actually be turned off for performance, unless `INSIST_IN_PROD` is set to `true`.
 
 ## Full API
 ```javascript
-
 insist.args(arguments, types...) // asserts the type of an arguments object
 insist.ofType(value, type) // asserts the type of a value
 insist.isType(type) // asserts that the supplied type is actually a type

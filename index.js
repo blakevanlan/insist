@@ -233,7 +233,7 @@ insist = {
    }
 };
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' && process.env.INSIST_IN_PROD !== 'true') {
    var noop = function () {};
    insist.args = noop;
    insist.ofType = noop;
