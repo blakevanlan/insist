@@ -16,7 +16,7 @@ var foo = function (arg1, arg2) {
 };
 
 foo('hi', true); // works!
-foo('I'm', 'wrong'); // throws error
+foo('hi', 'true'); // throws error
 ```
 
 ## More interesting stuff
@@ -28,14 +28,14 @@ Just put the desired types in an array.
 var insist = require('insist-types');
 
 var foo = function (arg1) {
-   insist.args(arguments, [String, Boolean, Object]);
+   insist.args(arguments, [String, Boolean, Object], String);
    // ...
 };
 
-foo('hi'); // works!
-foo(true); // works!
-foo({}); // works!
-foo(1); // throws error
+foo('hi', 'hello'); // works!
+foo(true, 'hello'); // works!
+foo({}, 'hello'); // works!
+foo(1, 'hello'); // throws error
 ```
 
 ### Optional Types
@@ -56,7 +56,7 @@ foo(4, {}) // throws error
 ```
 
 ### Nullable Types
-```
+```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1) {
@@ -69,7 +69,7 @@ foo(null); // works!
 foo(function () {}); // works!
 foo('wrong') // throws error
 ```
-Both `insist.optional` and `insist.nullable` really just augment the type. In the above example, it would have worked to use `[Function, null]` instead of `insist.nullable`.
+Both `insist.optional` and `insist.nullable` really just augment the type. In the above example, it would have worked to use `[Function, null]` instead of `insist.nullable(Function)`.
 
 ### Typed Arrays
 ```javascript
@@ -139,10 +139,10 @@ function Foo() {
 };
 util.inherits(Foo, events.EventEmitter);
 
-foo = function (arg1) {
+var fn = function (arg1) {
    insist.args(arguments, events.EventEmitter);
    // ...
 };
 
-foo(new Foo()); // works!
+fn(new Foo()); // works!
 ```
