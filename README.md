@@ -1,6 +1,8 @@
 # Insist
 Insist on types! Make your code more readable by explicitly requiring type for function parameters.
 
+[ ![Codeship Status for blakevanlan/insist](https://codeship.com/projects/4aa39aa0-e875-0132-01bd-0e94167ad564/status?branch=master)](https://codeship.com/projects/82814)
+
 ## Install
 ```bash
 npm install insist-types
