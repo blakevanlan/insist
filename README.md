@@ -47,14 +47,14 @@ index when dealing with optional types.
 var insist = require('insist-types');
 
 var foo = function (arg1, optionalArg2) {
-   var args = insist.args(arguments, Number, insist.optional(Function));
-   // args will be [{number}, {function or null}]
+   var args = insist.args(arguments, Number, insist.optional(Object), Function);
+   // args will be [{number}, {object or null}, {function}]
 };
 
-foo(1); // works!
-foo(2, function () {}); // works!
-foo(3, null); // works!
-foo(4, {}) // throws error
+foo(1, function () {}); // works!
+foo(2, null, function () {}); // works!
+foo(3, {}) // throws error
+foo(4) // throws error
 ```
 
 ### Nullable Types
