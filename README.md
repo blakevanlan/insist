@@ -41,14 +41,14 @@ foo(1, 'hello'); // throws error
 ```
 
 ### Optional Types
-Optional types are some what simple right now. You can really only have trailing optional arguments because the comparison isn't shifted as optional arguments are found. They need a little more love.
-
+`insist.args` always returns an array of the arguments and shifts each argument into the proper
+index when dealing with optional types.
 ```javascript
 var insist = require('insist-types');
 
 var foo = function (arg1, optionalArg2) {
-   insist.args(arguments, Number, insist.optional(Function));
-   // ...
+   var args = insist.args(arguments, Number, insist.optional(Function));
+   // args will be [{number}, {function or null}]
 };
 
 foo(1); // works!
@@ -172,7 +172,7 @@ When the `NODE_ENV` is set to `production`, all of the asserts will actually be 
 
 ## Full API
 ```javascript
-insist.args(arguments, types...) // asserts the type of an arguments object
+insist.args(arguments, types...) // asserts the type of an arguments object and returns the shifted arguments
 insist.ofType(value, type) // asserts the type of a value
 insist.isType(type) // asserts that the supplied type is actually a type
 insist.isValidType(type) // returns true|false for whether the type is actually a type

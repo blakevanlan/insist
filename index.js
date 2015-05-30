@@ -4,15 +4,21 @@
  * types, use an array of acceptable types. 
  * @param {Array.<?>} args
  * @param {?,..} expected types
+ * @return Returns an array with the arguments shifted into the correct indices.
 **/
 args = function (args) {
    // Find the minimum expected length.
-   expected = Array.prototype.slice.call(arguments, 1);
-   minimum = expected.length
+   var expected = Array.prototype.slice.call(arguments, 1);
+   var minimum = expected.length
+   var hasOptionalTypes = false;
+   var shiftedArgs = [];
    for (var i = 0; i < expected.length; i++) {
       if (isOptionalType(expected[i])) {
          minimum--;
+         hasOptionalTypes = true;
       }
+      // Set each shiftedArgs element to null.
+      shiftedArgs[i] = null;
    } 
    // Check if the args and expected lengths are different (and there are no optional args).
    if (minimum == expected.length && args.length != expected.length) {
@@ -25,18 +31,50 @@ args = function (args) {
             ' arguments but received ' + args.length + ' instead.');
    }
 
-   for (var i = 0; i < expected.length; i++) {
-      type = expected[i];
+   var getExpectedVsRecieved = function () {
+      var argNames = [];
+      var expectedNames = [];
+      for (var i = 0; i < args.length; i++) {
+         argNames.push(getNameForValue(args[i]));
+      };
+      for (var i = 0; i < expected.length; i++) {
+         expectedNames.push(getNameForType(expected[i]));
+      };
+      return 'Expected arguments to be (' + expectedNames.join(', ') + ') but received (' +
+            argNames.join(', ') + ') instead.';
+   };
+
+   var curType = 0;
+   var curArg = 0;
+   while (curArg < args.length) {
+      var arg = args[curArg];
+      var type = expected[curType];
       if (!isValidType(type)) {
-         throw Error('Expected argument ' + i + ' is not a valid type.');
+         throw Error('Expected argument ' + curType + ' is not a valid type.');
       }
-      if (!isOfType(args[i], type)) {
-         argName = getNameForValue(args[i]);
-         typeName = getNameForType(type);
-         throw Error('Expected argument ' + i + ' to be an instance of ' + typeName +
-               ' but received ' + argName + 'instead.');
+      if (!isOfType(arg, type)) {
+         if (isOptionalType(type)) {
+            curType++;
+            if (curType >= expected.length) {
+               // We've run out of expected types so throw an error.
+               throw Error(getExpectedVsRecieved());
+            }
+         } else {
+            if (hasOptionalTypes) {
+               throw Error(getExpectedVsRecieved());  
+            }
+            var argName = getNameForValue(arg);
+            var typeName = getNameForType(type);
+            throw Error('Expected argument ' + i + ' to be an instance of ' + typeName +
+                  ' but received ' + argName + ' instead.');
+         }
+      } else {
+         shiftedArgs[curType] = arg;
+         curArg++;
+         curType++;
       }
    }
+   return shiftedArgs;
 };
 
 /**

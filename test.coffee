@@ -11,20 +11,37 @@ describe "insist", ->
 
    describe "args", ->
 
-      describe "length", ->
+      it "should not throw with empty args", ->
+         insist.args([])
 
-         it "should not throw with empty args", ->
-            insist.args([])
+      it "should not throw with expected length", ->
+         insist.args(["foo"], String)
 
-         it "should not throw with expected length", ->
-            insist.args(["foo"], String)
+      it "should throw if mismatched length", ->
+         fn = -> insist.args(["foo"])
+         expect(fn).to.throw(Error)
 
-         it "should throw if mismatched length", ->
-            fn = -> insist.args(["foo"])
-            expect(fn).to.throw(Error)
+      it "should not throw if optional args are excluded", ->
+         insist.args(["foo"], String, insist.optional(String))
 
-         it "should not throw if optional args are excluded", ->
-            insist.args(["foo"], String, insist.optional(String))
+      it "should shift arguments for optional types", ->
+         insist.args([(->)], insist.optional(Object), Function)
+
+      it "should throw if wrong shifted args", ->
+         fn = -> insist.args([{}], insist.optional(String), Number);
+         expect(fn).to.throw(Error)
+
+      it "should throw if there isn't a matching optional type", ->
+         fn = -> insist.args([{}], insist.optional(String), insist.optional(Number));
+         expect(fn).to.throw(Error)
+
+      it "should return the original args if there are no optional types", ->
+         result = insist.args([true, "string"], Boolean, String)
+         expect(result).to.eql([true, "string"])
+
+      it "should return the shifted args if there are missing optional args", ->
+         result = insist.args([true, "false"], Boolean, insist.optional(Object), String)
+         expect(result).to.eql([true, null, "false"])
 
    describe "ofType", ->
 
