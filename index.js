@@ -13,19 +13,29 @@ args = function (args) {
    var hasOptionalTypes = false;
    var shiftedArgs = [];
    for (var i = 0; i < expected.length; i++) {
+      if (!isValidType(expected[i])) {
+         throw Error('Expected argument ' + i + ' is not a valid type.');
+      }
       if (isOptionalType(expected[i])) {
          minimum--;
          hasOptionalTypes = true;
       }
       // Set each shiftedArgs element to null.
       shiftedArgs[i] = null;
-   } 
+   };
+   // Exit early if in production, INSIST_IN_PROD is not equal to true and there are no optional
+   // options.
+   if (process.env.NODE_ENV === 'production' && process.env.INSIST_IN_PROD !== 'true' &&
+         !hasOptionalTypes) {
+      return [];
+   }
+
    // Check if the args and expected lengths are different (and there are no optional args).
    if (minimum == expected.length && args.length != expected.length) {
       throw Error('Expected ' + expected.length + ' arguments but received ' +
             args.length + ' instead.');
    }
-   // Chick if the args are within the expected range.
+   // Check if the args are within the expected range.
    if (args.length < minimum || args.length > expected.length) {
       throw Error('Expected between ' + minimum + ' and ' + expected.length +
             ' arguments but received ' + args.length + ' instead.');
@@ -44,36 +54,70 @@ args = function (args) {
             argNames.join(', ') + ') instead.';
    };
 
-   var curType = 0;
-   var curArg = 0;
-   while (curArg < args.length) {
-      var arg = args[curArg];
-      var type = expected[curType];
-      if (!isValidType(type)) {
-         throw Error('Expected argument ' + curType + ' is not a valid type.');
+   var curArg = args.length - 1;
+   var remainingOptionalArgs = expected.length - minimum;
+   var optionalIndiceChunks = []
+   var optionalIndiceChunk = []
+   var availableArgsChunks = []
+   var availableArgsChunk = []
+
+   // First fill in all of the required types.
+   for (i = expected.length - 1; i >= 0; i--) {
+      var type = expected[i];
+      if (isOptionalType(type)) {
+         optionalIndiceChunk.unshift(i);
+         continue;
       }
-      if (!isOfType(arg, type)) {
-         if (isOptionalType(type)) {
-            curType++;
-            if (curType >= expected.length) {
-               // We've run out of expected types so throw an error.
-               throw Error(getExpectedVsRecieved());
-            }
-         } else {
-            if (hasOptionalTypes) {
-               throw Error(getExpectedVsRecieved());  
-            }
-            var argName = getNameForValue(arg);
-            var typeName = getNameForType(type);
-            throw Error('Expected argument ' + i + ' to be an instance of ' + typeName +
-                  ' but received ' + argName + ' instead.');
+      // Capture groups of optional arguments separated by required arguments.
+      optionalIndiceChunks.unshift(optionalIndiceChunk);
+      optionalIndiceChunk = [];
+
+      while (!isOfType(args[curArg], type)) {
+         // Capture groups of available arguments separated by ones that have been used.
+         availableArgsChunk.unshift(curArg);
+         curArg--;
+         remainingOptionalArgs--;
+         if (curArg < 0 || remainingOptionalArgs < 0) {
+            throw Error(getExpectedVsRecieved());
          }
-      } else {
-         shiftedArgs[curType] = arg;
-         curArg++;
-         curType++;
       }
+      availableArgsChunks.unshift(availableArgsChunk);
+      availableArgsChunk = []
+      shiftedArgs[i] = args[curArg--];
    }
+   // Now that we have found all the required arguments, group the rest for processing with optional
+   // arguments.
+   while (curArg >= 0) {
+      availableArgsChunk.unshift(curArg);
+      curArg--;
+   }
+   availableArgsChunks.unshift(availableArgsChunk);
+   optionalIndiceChunks.unshift(optionalIndiceChunk);
+
+   // Make sure that the optional argument count matches up correctly.
+   if (availableArgsChunks.length != optionalIndiceChunks.length) {
+      throw Error(getExpectedVsRecieved());
+   }
+
+   // Go through all the optional chunks and argument chunks to match up the optional arguments.
+   optionalIndiceChunks.forEach(function (optionalIndices, index) {
+      availableArgsChunk = availableArgsChunks[index];
+      i = 0;
+      availableArgsChunk.forEach(function (argIndex) {
+         arg = args[argIndex]
+         // Skip forward until we find an optional expected argument that matches.
+         while (!isOfType(arg, expected[optionalIndices[i]]) && i < optionalIndices.length) {
+            i++;
+         }
+         // If none match then the arguments are invalid.
+         if (i >= optionalIndices.length) {
+            throw Error(getExpectedVsRecieved());
+         }
+         // Success! This is an optional expected argument.
+         shiftedArgs[optionalIndices[i]] = arg;
+      });
+   });
+
    return shiftedArgs;
 };
 
@@ -272,8 +316,9 @@ insist = {
 };
 
 if (process.env.NODE_ENV === 'production' && process.env.INSIST_IN_PROD !== 'true') {
+   // We can't noop inist.args because it can be used to shift arguments when dealing with optional
+   // arguments.
    var noop = function () {};
-   insist.args = noop;
    insist.ofType = noop;
    insist.isType = noop;
 }

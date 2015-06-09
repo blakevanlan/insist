@@ -43,6 +43,37 @@ describe "insist", ->
          result = insist.args([true, "false"], Boolean, insist.optional(Object), String)
          expect(result).to.eql([true, null, "false"])
 
+      it "should shift args into non-optional position if multiple args match", ->
+         fn = ->
+         result = insist.args([fn], insist.optional(Object), Function)
+         expect(result).to.eql([null, fn])
+
+      describe "complex optional cases", ->
+
+         it "should pass complex test 1", ->
+            fn = ->
+            result = insist.args([{}, fn, true, fn], insist.optional(Object), Function,
+                  insist.optional(String), insist.optional(Boolean), Function)
+            expect(result).to.eql([{}, fn, null, true, fn])
+
+         it "should pass complex test 2", ->
+            fn = ->
+            result = insist.args([fn, true, fn], insist.optional(Object), Function,
+                  insist.optional(String), insist.optional(Boolean), Function)
+            expect(result).to.eql([null, fn, null, true, fn])
+
+         it "should pass complex test 3", ->
+            test = ->
+               fn = ->
+               insist.args([fn, {}, fn], insist.optional(Object), Function,
+                  insist.optional(String), insist.optional(Boolean), Function)
+            expect(test).to.throw(Error)
+
+         it "should pass complex test 4", ->
+            fn = ->
+            result = insist.args([fn], insist.optional(Function), Function)
+            expect(result).to.eql([null, fn])
+
    describe "ofType", ->
 
       it "should throw if value of the wrong type is supplied", ->
