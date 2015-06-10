@@ -87,19 +87,27 @@ args = function (args) {
          advanceArg();
       }
 
-      // Check how many optional types in front of this argument actually match. Otherwise, this
-      // could consume an argument that actually is for an option type.
+      // Check how many optional types in front of this argument that match the current value.
       var j = i + 1;
-      var matchingOptionalTypes = 0;
+      var consecutiveMatchingOptional = 0;
       while (j < expected.length && isOptionalType(expected[j]) &&
             isOfType(args[curArg], expected[j])) {
-         matchingOptionalTypes++;
+         consecutiveMatchingOptional++;
          j++;
       }
+      // Check how many required types are behind this argument that match the current value.
+      var j = i - 1;
+      var consecutiveMatchingRequired = 0
+      while (j >= 0 && !isOptionalType(expected[j]) && isOfType(args[curArg], expected[j])) {
+         consecutiveMatchingRequired++;
+         j--;
+      }
+
       // Now that we have found the consecutive matching types, more forward through the arguments
       // to see if there are enough to fill the option types.
-      while (curArg > 0 && isOfType(args[curArg - 1], type) && matchingOptionalTypes > 0) {
-         matchingOptionalTypes--;
+      var diff = consecutiveMatchingOptional - consecutiveMatchingRequired;
+      while (diff > 0 && curArg > 0 && isOfType(args[curArg - 1], type)) {
+         diff--;
          advanceArg();
       }
 
