@@ -56,10 +56,20 @@ args = function (args) {
 
    var curArg = args.length - 1;
    var remainingOptionalArgs = expected.length - minimum;
-   var optionalIndiceChunks = []
-   var optionalIndiceChunk = []
-   var availableArgsChunks = []
-   var availableArgsChunk = []
+   var optionalIndiceChunks = [];
+   var optionalIndiceChunk = [];
+   var availableArgsChunks = [];
+   var availableArgsChunk = [];
+
+   // Capture groups of available arguments separated by ones that have been used.
+   var advanceArg = function () {
+      availableArgsChunk.unshift(curArg);
+      curArg--;
+      remainingOptionalArgs--;
+      if (curArg < 0 || remainingOptionalArgs < 0) {
+         throw Error(getExpectedVsRecieved());
+      }
+   };
 
    // First fill in all of the required types.
    for (i = expected.length - 1; i >= 0; i--) {
@@ -72,15 +82,27 @@ args = function (args) {
       optionalIndiceChunks.unshift(optionalIndiceChunk);
       optionalIndiceChunk = [];
 
+      // Keep moving down the line of arguments until one matches.
       while (!isOfType(args[curArg], type)) {
-         // Capture groups of available arguments separated by ones that have been used.
-         availableArgsChunk.unshift(curArg);
-         curArg--;
-         remainingOptionalArgs--;
-         if (curArg < 0 || remainingOptionalArgs < 0) {
-            throw Error(getExpectedVsRecieved());
-         }
+         advanceArg();
       }
+
+      // Check how many optional types in front of this argument actually match. Otherwise, this
+      // could consume an argument that actually is for an option type.
+      var j = i + 1;
+      var matchingOptionalTypes = 0;
+      while (j < expected.length && isOptionalType(expected[j]) &&
+            isOfType(args[curArg], expected[j])) {
+         matchingOptionalTypes++;
+         j++;
+      }
+      // Now that we have found the consecutive matching types, more forward through the arguments
+      // to see if there are enough to fill the option types.
+      while (curArg > 0 && isOfType(args[curArg - 1], type) && matchingOptionalTypes > 0) {
+         matchingOptionalTypes--;
+         advanceArg();
+      }
+
       availableArgsChunks.unshift(availableArgsChunk);
       availableArgsChunk = []
       shiftedArgs[i] = args[curArg--];
@@ -114,7 +136,7 @@ args = function (args) {
             throw Error(getExpectedVsRecieved());
          }
          // Success! This is an optional expected argument.
-         shiftedArgs[optionalIndices[i]] = arg;
+         shiftedArgs[optionalIndices[i++]] = arg;
       });
    });
 
