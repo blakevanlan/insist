@@ -54,6 +54,17 @@ args = function (args) {
             argNames.join(', ') + ') instead.';
    };
 
+   // We don't have to worry about shifting if all the arguments are present.
+   if (args.length == expected.length) {
+      for (var i = 0; i < expected.length; i++) {
+         if (!isOfType(args[i], expected[i])) {
+            throw Error(getExpectedVsRecieved());
+         }
+      };
+      return args;
+   }
+
+   var j = 0;
    var curArg = args.length - 1;
    var remainingOptionalArgs = expected.length - minimum;
    var optionalIndiceChunks = [];
@@ -78,38 +89,64 @@ args = function (args) {
          optionalIndiceChunk.unshift(i);
          continue;
       }
-      // Capture groups of optional arguments separated by required arguments.
-      optionalIndiceChunks.unshift(optionalIndiceChunk);
-      optionalIndiceChunk = [];
-
       // Keep moving down the line of arguments until one matches.
       while (!isOfType(args[curArg], type)) {
          advanceArg();
       }
 
       // Check how many optional types in front of this argument that match the current value.
-      var j = i + 1;
-      var consecutiveMatchingOptional = 0;
-      while (j < expected.length && isOptionalType(expected[j]) &&
-            isOfType(args[curArg], expected[j])) {
-         consecutiveMatchingOptional++;
+      j = i + 1;
+      var matchingOptionals = 0;
+      var inBetweenOptionals = 0;
+      var tmpInBetween = 0;
+      while (j < expected.length && isOptionalType(expected[j])) {
+         if (isOfType(args[curArg], expected[j])) {
+            matchingOptionals++;
+            inBetweenOptionals += tmpInBetween;
+            tmpInBetween = 0;
+         } else {
+            tmpInBetween++;
+         }
          j++;
       }
-      // Check how many required types are behind this argument that match the current value.
-      var j = i - 1;
-      var consecutiveMatchingRequired = 0
-      while (j >= 0 && !isOptionalType(expected[j]) && isOfType(args[curArg], expected[j])) {
-         consecutiveMatchingRequired++;
+
+      // Check how many required types are behind this argument that match the current value. We
+      // will then use this value to determine if the current argument can be allowed to fill an
+      // optional spot instead of a required one.
+      j = i - 1;
+      var matchingRequireds = 0
+      while (j >= 0) {
+         if (!isOptionalType(expected[j]) && isOfType(args[curArg], expected[j])) {
+            matchingRequireds++;
+         }
          j--;
       }
 
       // Now that we have found the consecutive matching types, more forward through the arguments
       // to see if there are enough to fill the option types.
-      var diff = consecutiveMatchingOptional - consecutiveMatchingRequired;
-      while (diff > 0 && curArg > 0 && isOfType(args[curArg - 1], type)) {
-         diff--;
-         advanceArg();
+      var matchesRequired = 1 + matchingRequireds;
+      var availableDistance = matchingRequireds + inBetweenOptionals + matchingOptionals;
+
+      // Determine if there are enough optional arguments.
+      j = curArg - 1;
+      while (j >= 0 && availableDistance > 0 && matchesRequired > 0) {
+         if (isOfType(args[j], type)) {
+            matchesRequired--;
+         }
+         availableDistance--;
+         j--;
       }
+      if (matchesRequired <= 0) {
+         // Found enough matches to let this be an optional argument. Advance the argument and
+         // then restart on this same function.
+         advanceArg();
+         i++;
+         continue;
+      }
+
+      // Capture groups of optional arguments separated by required arguments.
+      optionalIndiceChunks.unshift(optionalIndiceChunk);
+      optionalIndiceChunk = [];
 
       availableArgsChunks.unshift(availableArgsChunk);
       availableArgsChunk = []

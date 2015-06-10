@@ -86,6 +86,19 @@ describe "insist", ->
                   insist.optional(String), Function)
             expect(result).to.eql(["foo", "bar", null, fn])
 
+         it "should pass complex test 7", ->
+            fn = ->
+            result = insist.args(["foo", {}, true, "bar"], String, insist.optional(Object),
+                  insist.optional(Boolean), insist.optional(String))
+            expect(result).to.eql(["foo", {}, true, "bar"])
+
+         it "should pass complex test 8", ->
+            fn = ->
+            result = insist.args(["foo", {}, "bar", "please", "work", fn], String,
+                  Object, String, insist.optional(String), insist.optional(String),
+                  insist.optional(String), Function)
+            expect(result).to.eql(["foo", {}, "bar", "please", "work", null, fn])
+
    describe "ofType", ->
 
       it "should throw if value of the wrong type is supplied", ->
