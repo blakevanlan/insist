@@ -30,13 +30,11 @@ var args = function (args) {
 
    // Check if the args and expected lengths are different (and there are no optional args).
    if (minimum == expected.length && args.length != expected.length) {
-      throw Error('Expected ' + expected.length + ' arguments but received ' +
-            args.length + ' instead.');
+      throw Error(getExpectedVsRecieved_(expected, args));
    }
    // Check if the args are within the expected range.
    if (args.length < minimum || args.length > expected.length) {
-      throw Error('Expected between ' + minimum + ' and ' + expected.length +
-            ' arguments but received ' + args.length + ' instead.');
+      throw Error(getExpectedVsRecieved_(expected, args));
    }
 
    // We don't have to worry about shifting if all the arguments are present.
