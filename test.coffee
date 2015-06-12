@@ -121,12 +121,25 @@ describe "insist", ->
 
    describe "ofType", ->
 
+      it "should throw if the supplied type is invalid", ->
+         fn = -> insist.ofType("foo", "bar")
+         expect(fn).to.throw(Error)
+
       it "should throw if value of the wrong type is supplied", ->
          fn = -> insist.ofType("blah", Boolean)
          expect(fn).to.throw(Error)
 
       it "should not throw if value of the correct type is supplied", ->
          insist.ofType({foo: "bar"}, Object) 
+
+   describe "isType", ->
+
+      it "should throw if a type isn't supplied", ->
+         fn = -> insist.isType("foo")
+         expect(fn).to.throw(Error)
+
+      it "should not throw if a type is supplied", ->
+         insist.isType(String)
 
    describe "isValidType", ->
 
@@ -237,6 +250,9 @@ describe "insist", ->
       it "should return recursive subtypes if an ArrayOf type is supplied", ->
          type = new insist.ArrayOf(new insist.ArrayOf(String))
          expect(insist.getNameForType(type)).to.equal("Array<Array<String>>")
+
+      it "should return 'Invalid type' if an invalid type is supplied", ->
+         expect(insist.getNameForType("foo")).to.equal("Invalid type")
 
    describe "isOfType", ->
 
