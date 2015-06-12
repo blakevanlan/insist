@@ -46,7 +46,7 @@ index when dealing with optional types.
 ```javascript
 var insist = require('insist-types');
 
-var foo = function (arg1, optionalArg2) {
+var foo = function (arg1, optionalArg2, arg3) {
    var args = insist.args(arguments, Number, insist.optional(Object), Function);
    // args will be [{number}, {object or null}, {function}]
 };
@@ -66,12 +66,12 @@ var foo = function (arg1) {
    // ...
 };
 
-foo(); // works!
 foo(null); // works!
 foo(function () {}); // works!
+foo(); // throws error
 foo('wrong') // throws error
 ```
-Both `insist.optional` and `insist.nullable` really just augment the type. In the above example, it would have worked to use `[Function, null]` instead of `insist.nullable(Function)`.
+Both `insist.optional` and `insist.nullable` really just augment the type. In the above example, it would have worked to use `[Function, null]` instead of `insist.nullable(Function)`. If you want to include `undefined` make sure you use `insist.optional` instead of `insist.nullable`.
 
 ### Typed Arrays
 ```javascript
@@ -160,12 +160,15 @@ foo = function (arg1) {
    // ...
 };
 
+foo(null); // works!
 foo(true); // works!
 foo("true"); // works!
 foo(1); // works!
 foo(["true"]); // works!
 foo({}); // works!
+foo(); // throws error
 ```
+I've debated a lot about whether `null` and `undefined` should be include in `insist.anything`. Currently, `null` is acceptable and `undefined` is not because I've found this to be the most useful `anything`. Open an issue if you have some input!
 
 ## Deloyment Note
 When the `NODE_ENV` is set to `production`, all of the asserts will actually be turned off for performance, unless `INSIST_IN_PROD` is set to `true`.
