@@ -21,6 +21,18 @@ describe "insist", ->
          fn = -> insist.args(["foo"])
          expect(fn).to.throw(Error)
 
+      it "should throw if one of the expected types is not a type", ->
+         fn = -> insist.args(["foo"], "type")
+         expect(fn).to.throw(Error)
+
+      it "should throw if two many arguments are missing", ->
+         fn = -> insist.args(["foo"], insist.optional(String), Boolean, Boolean)
+         expect(fn).to.throw(Error)
+
+      it "should throw if the arguments are out of order", ->
+         fn = -> insist.args(["foo", true, true], Boolean, insist.optional(String), Boolean)
+         expect(fn).to.throw(Error)
+
       it "should not throw if optional args are excluded", ->
          insist.args(["foo"], String, insist.optional(String))
 
@@ -98,6 +110,14 @@ describe "insist", ->
                   Object, String, insist.optional(String), insist.optional(String),
                   insist.optional(String), Function)
             expect(result).to.eql(["foo", {}, "bar", "please", "work", null, fn])
+
+         it "should pass complex test 9", ->
+            fn = ->
+            result = insist.args(["foo", "bar", fn], String,
+                  insist.optional(String), String, insist.optional(String), insist.optional(String),
+                  insist.optional(String), Function)
+            expect(result).to.eql(["foo", null, "bar", null, null, null, fn])
+
 
    describe "ofType", ->
 
@@ -302,6 +322,42 @@ describe "insist", ->
 
    describe "nullable", ->
 
-      it "should pass isOfType", ->
-         insist.isOfType(null, insist.nullable(String))
-         insist.isOfType("foo", insist.nullable(String))
+      it "should allow null", ->
+         expect(insist.isOfType(null, insist.nullable(String))).to.be.true
+      
+      it "should allow specified type", ->
+         expect(insist.isOfType("foo", insist.nullable(String))).to.be.true
+
+      it "should not allow undefined", ->
+         expect(insist.isOfType(undefined, insist.nullable(String))).to.be.false
+
+      it "should not allow anything else", ->
+         expect(insist.isOfType({}, insist.nullable(String))).to.be.false
+
+   describe "optional", ->
+
+      it "should allow undefined", ->
+         expect(insist.isOfType(undefined, insist.optional(String))).to.be.true
+         
+      it "should allow null", ->
+         expect(insist.isOfType(null, insist.optional(Object))).to.be.true
+
+      it "should allow specified type", ->
+         expect(insist.isOfType({}, insist.optional(Object))).to.be.true
+
+      it "should not allow anything else", ->
+         expect(insist.isOfType(true, insist.nullable(Object))).to.be.false
+
+   describe "anything", ->
+
+      it "should allow anything but undefined", ->
+         expect(insist.isOfType("foo", insist.anything())).to.be.true
+         expect(insist.isOfType(true, insist.anything())).to.be.true
+         expect(insist.isOfType(123, insist.anything())).to.be.true
+         expect(insist.isOfType({}, insist.anything())).to.be.true
+         expect(insist.isOfType([], insist.anything())).to.be.true
+         expect(insist.isOfType(null, insist.anything())).to.be.true
+         expect(insist.isOfType((->), insist.anything())).to.be.true
+
+      it "should not allow undefined", ->
+         expect(insist.isOfType(undefined, insist.anything())).to.be.false

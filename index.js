@@ -6,12 +6,12 @@
  * @param {?,..} expected types
  * @return Returns an array with the arguments shifted into the correct indices.
 **/
-args = function (args) {
+var args = function (args) {
    // Find the minimum expected length.
    var expected = Array.prototype.slice.call(arguments, 1);
    var minimum = expected.length
    var hasOptionalTypes = false;
-   var shiftedArgs = [];
+   
    for (var i = 0; i < expected.length; i++) {
       if (!isValidType(expected[i])) {
          throw Error('Expected argument ' + i + ' is not a valid type.');
@@ -20,8 +20,6 @@ args = function (args) {
          minimum--;
          hasOptionalTypes = true;
       }
-      // Set each shiftedArgs element to null.
-      shiftedArgs[i] = null;
    };
    // Exit early if in production, INSIST_IN_PROD is not equal to true and there are no optional
    // options.
@@ -41,29 +39,29 @@ args = function (args) {
             ' arguments but received ' + args.length + ' instead.');
    }
 
-   var getExpectedVsRecieved = function () {
-      var argNames = [];
-      var expectedNames = [];
-      for (var i = 0; i < args.length; i++) {
-         argNames.push(getNameForValue(args[i]));
-      };
-      for (var i = 0; i < expected.length; i++) {
-         expectedNames.push(getNameForType(expected[i]));
-      };
-      return 'Expected arguments to be (' + expectedNames.join(', ') + ') but received (' +
-            argNames.join(', ') + ') instead.';
-   };
-
    // We don't have to worry about shifting if all the arguments are present.
-   if (args.length == expected.length) {
+   if (args.length === expected.length) {
       for (var i = 0; i < expected.length; i++) {
          if (!isOfType(args[i], expected[i])) {
-            throw Error(getExpectedVsRecieved());
+            throw Error(getExpectedVsRecieved_(expected, args));
          }
       };
       return args;
    }
 
+   return shiftArguments_(expected, args, minimum);
+};
+
+
+/**
+ * Returns an array of all of the arguments shifted into the correct place.
+ * @param {Array} expected
+ * @param {Array} actual
+ * @returns {Array}
+ * @private
+ */
+var shiftArguments_ = function (expected, args, minimum) {
+   var shiftedArgs = [];
    var j = 0;
    var curArg = args.length - 1;
    var remainingOptionalArgs = expected.length - minimum;
@@ -72,13 +70,16 @@ args = function (args) {
    var availableArgsChunks = [];
    var availableArgsChunk = [];
 
+   // Fill the return array with nulls first.
+   for (var i = 0; i < expected.length; i++) shiftedArgs[i] = null;
+
    // Capture groups of available arguments separated by ones that have been used.
    var advanceArg = function () {
       availableArgsChunk.unshift(curArg);
       curArg--;
       remainingOptionalArgs--;
       if (curArg < 0 || remainingOptionalArgs < 0) {
-         throw Error(getExpectedVsRecieved());
+         throw Error(getExpectedVsRecieved_(expected, args));
       }
    };
 
@@ -144,10 +145,10 @@ args = function (args) {
          continue;
       }
 
-      // Capture groups of optional arguments separated by required arguments.
+      // Capture groups of optional arguments separated by required arguments and rest the chunk
+      // arrays to prepare for the next grouping.
       optionalIndiceChunks.unshift(optionalIndiceChunk);
       optionalIndiceChunk = [];
-
       availableArgsChunks.unshift(availableArgsChunk);
       availableArgsChunk = []
       shiftedArgs[i] = args[curArg--];
@@ -163,7 +164,7 @@ args = function (args) {
 
    // Make sure that the optional argument count matches up correctly.
    if (availableArgsChunks.length != optionalIndiceChunks.length) {
-      throw Error(getExpectedVsRecieved());
+      throw Error(getExpectedVsRecieved_(expected, args));
    }
 
    // Go through all the optional chunks and argument chunks to match up the optional arguments.
@@ -178,7 +179,7 @@ args = function (args) {
          }
          // If none match then the arguments are invalid.
          if (i >= optionalIndices.length) {
-            throw Error(getExpectedVsRecieved());
+            throw Error(getExpectedVsRecieved_(expected, args));
          }
          // Success! This is an optional expected argument.
          shiftedArgs[optionalIndices[i++]] = arg;
@@ -189,11 +190,31 @@ args = function (args) {
 };
 
 /**
+ * Returns a string of expected arguments vs actual.
+ * @param {Array} expected
+ * @param {Array} actual
+ * @returns {string}
+ * @private
+ */
+var getExpectedVsRecieved_ = function (expected, actual) {
+   var argNames = [];
+   var expectedNames = [];
+   for (var i = 0; i < actual.length; i++) {
+      argNames.push(getNameForValue(actual[i]));
+   };
+   for (var i = 0; i < expected.length; i++) {
+      expectedNames.push(getNameForType(expected[i]));
+   };
+   return 'Expected arguments to be (' + expectedNames.join(', ') + ') but received (' +
+         argNames.join(', ') + ') instead.';
+};
+
+/**
  * Asserts that the supplied value is of the supplied type.
  * @param {?} value
  * @param {type} types
 **/
-ofType = function (value, type) {
+var ofType = function (value, type) {
    if (!isValidType(type)) {
       throw Error('Invalid type supplied.');   
    }  
@@ -207,7 +228,7 @@ ofType = function (value, type) {
 /**
  * @param {?} type
 **/
-isType = function (type) {
+var isType = function (type) {
    if (!isValidType(type)) {
       throw Error('Expected a type but received ' + type + '.'); 
    }
@@ -218,7 +239,7 @@ isType = function (type) {
  * @param {type} type
  * @return {boolean} 
 **/
-isValidType = function (type) {
+var isValidType = function (type) {
    if (type === null) return true;
    if (type === undefined) return true;
    if (type instanceof Array) {
@@ -237,7 +258,7 @@ isValidType = function (type) {
  * @param {type} type
  * @return {boolean}
 **/
-isOptionalType = function (type) {
+var isOptionalType = function (type) {
    if (type === undefined) return true;
    if (type instanceof Array) {
       for (var i = 0; i < type.length; i++) {
@@ -252,7 +273,7 @@ isOptionalType = function (type) {
  * @param {?} value
  * @return {string}
 **/
-getNameForValue = function (value) {
+var getNameForValue = function (value) {
    if (value === undefined) return 'undefined';
    if (value === null) return 'null';
 
@@ -291,7 +312,7 @@ getNameForValue = function (value) {
  * @param {type} type
  * @return {string}
 **/
-getNameForType = function (type) {
+var getNameForType = function (type) {
    if (type === undefined) return 'undefined';
    if (type === null) return "null";
 
@@ -320,7 +341,7 @@ getNameForType = function (type) {
  * @param {type} type
  * @return {boolean}
 **/
-isOfType = function (value, type) {
+var isOfType = function (value, type) {
    // Check if this type is asserting an array of objects.
    if (type instanceof ArrayOf) {
       if (!(value instanceof Array)) return false;
@@ -348,9 +369,10 @@ isOfType = function (value, type) {
    if (isValid || (type !== String && type !== Boolean && type !== Number)) {
       return isValid;
    }
-   if (type === String) return typeof value === 'string';
-   if (type === Boolean) return typeof value === 'boolean';
-   if (type === Number) return typeof value === 'number';
+   var actualType = typeof value
+   if (type === String) return actualType === 'string';
+   if (type === Boolean) return actualType === 'boolean';
+   if (type === Number) return actualType === 'number';
    return false;
 };
 
@@ -358,7 +380,7 @@ function ArrayOf (type) {
    this.type = type;
 };
 
-insist = {
+var insist = {
    args: args,
    ofType: ofType,
    isType: isType,

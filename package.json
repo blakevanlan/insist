@@ -4,12 +4,14 @@
   "description": "Insist on types!",
   "main": "index.js",
   "devDependencies": {
+    "blanket": "^1.1.7",
     "chai": "^2.3.0",
     "coffee-script": "^1.9.3",
     "mocha": "^2.2.5"
   },
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register test.coffee"
+    "test": "mocha --compilers coffee:coffee-script/register test.coffee",
+    "test-coverage": "mocha --compilers coffee:coffee-script/register test.coffee --require blanket -R html-cov > coverage.html; /usr/bin/open -a \"/Applications/Google Chrome.app\" coverage.html"
   },
   "repository": {
     "type": "git",
@@ -24,5 +26,15 @@
   "bugs": {
     "url": "https://github.com/blakevanlan/insist/issues"
   },
-  "homepage": "https://github.com/blakevanlan/insist"
+  "homepage": "https://github.com/blakevanlan/insist",
+  "config": {
+    "blanket": {
+      "pattern": "index",
+      "data-cover-never": [
+        "node_modules",
+        "test"
+      ],
+      "loader": "./node-loaders/coffee-script"
+    }
+  }
 }
