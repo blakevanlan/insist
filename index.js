@@ -62,20 +62,19 @@ var args = function (args) {
  */
 var shiftArguments_ = function (expected, args, minimum) {
    var shiftedArgs = [];
-   var j = 0;
    var curArg = args.length - 1;
    var remainingOptionalArgs = expected.length - minimum;
-   var optionalIndiceChunks = [];
-   var optionalIndiceChunk = [];
-   var availableArgsChunks = [];
-   var availableArgsChunk = [];
+   var optionalIndiceSegments = [];
+   var optionalIndiceSegment = [];
+   var availableArgsSegments = [];
+   var availableArgsSegment = [];
 
    // Fill the return array with nulls first.
    for (var i = 0; i < expected.length; i++) shiftedArgs[i] = null;
 
    // Capture groups of available arguments separated by ones that have been used.
    var advanceArg = function () {
-      availableArgsChunk.unshift(curArg);
+      availableArgsSegment.unshift(curArg);
       curArg--;
       remainingOptionalArgs--;
       if (curArg < 0 || remainingOptionalArgs < 0) {
@@ -83,11 +82,12 @@ var shiftArguments_ = function (expected, args, minimum) {
       }
    };
 
-   // First fill in all of the required types.
+   // Fill in all of the required types, starting from the last expected argument and working
+   // towards the first.
    for (i = expected.length - 1; i >= 0; i--) {
       var type = expected[i];
       if (isOptionalType(type)) {
-         optionalIndiceChunk.unshift(i);
+         optionalIndiceSegment.unshift(i);
          continue;
       }
       // Keep moving down the line of arguments until one matches.
@@ -95,49 +95,8 @@ var shiftArguments_ = function (expected, args, minimum) {
          advanceArg();
       }
 
-      // Check how many optional types in front of this argument that match the current value.
-      j = i + 1;
-      var matchingOptionals = 0;
-      var inBetweenOptionals = 0;
-      var tmpInBetween = 0;
-      while (j < expected.length && isOptionalType(expected[j])) {
-         if (isOfType(args[curArg], expected[j])) {
-            matchingOptionals++;
-            inBetweenOptionals += tmpInBetween;
-            tmpInBetween = 0;
-         } else {
-            tmpInBetween++;
-         }
-         j++;
-      }
-
-      // Check how many required types are behind this argument that match the current value. We
-      // will then use this value to determine if the current argument can be allowed to fill an
-      // optional spot instead of a required one.
-      j = i - 1;
-      var matchingRequireds = 0
-      while (j >= 0) {
-         if (!isOptionalType(expected[j]) && isOfType(args[curArg], expected[j])) {
-            matchingRequireds++;
-         }
-         j--;
-      }
-
-      // Now that we have found the consecutive matching types, more forward through the arguments
-      // to see if there are enough to fill the option types.
-      var matchesRequired = 1 + matchingRequireds;
-      var availableDistance = matchingRequireds + inBetweenOptionals + matchingOptionals;
-
-      // Determine if there are enough optional arguments.
-      j = curArg - 1;
-      while (j >= 0 && availableDistance > 0 && matchesRequired > 0) {
-         if (isOfType(args[j], type)) {
-            matchesRequired--;
-         }
-         availableDistance--;
-         j--;
-      }
-      if (matchesRequired <= 0) {
+      // Check if this argument should be left for a trailing optional argument.
+      if (checkIfShouldLeaveArgument_(expected, i, args, curArg)) {
          // Found enough matches to let this be an optional argument. Advance the argument and
          // then restart on this same function.
          advanceArg();
@@ -145,33 +104,29 @@ var shiftArguments_ = function (expected, args, minimum) {
          continue;
       }
 
-      // Capture groups of optional arguments separated by required arguments and rest the chunk
-      // arrays to prepare for the next grouping.
-      optionalIndiceChunks.unshift(optionalIndiceChunk);
-      optionalIndiceChunk = [];
-      availableArgsChunks.unshift(availableArgsChunk);
-      availableArgsChunk = []
+      // Capture groups of optional arguments separated by required arguments.
+      optionalIndiceSegments.unshift(optionalIndiceSegment);
+      optionalIndiceSegment = [];
+      availableArgsSegments.unshift(availableArgsSegment);
+      availableArgsSegment = []
       shiftedArgs[i] = args[curArg--];
    }
    // Now that we have found all the required arguments, group the rest for processing with optional
    // arguments.
-   while (curArg >= 0) {
-      availableArgsChunk.unshift(curArg);
-      curArg--;
-   }
-   availableArgsChunks.unshift(availableArgsChunk);
-   optionalIndiceChunks.unshift(optionalIndiceChunk);
+   while (curArg >= 0) availableArgsSegment.unshift(curArg--);
+   availableArgsSegments.unshift(availableArgsSegment);
+   optionalIndiceSegments.unshift(optionalIndiceSegment);
 
    // Make sure that the optional argument count matches up correctly.
-   if (availableArgsChunks.length != optionalIndiceChunks.length) {
+   if (availableArgsSegments.length != optionalIndiceSegments.length) {
       throw Error(getExpectedVsRecieved_(expected, args));
    }
 
-   // Go through all the optional chunks and argument chunks to match up the optional arguments.
-   optionalIndiceChunks.forEach(function (optionalIndices, index) {
-      availableArgsChunk = availableArgsChunks[index];
+   // Go through all the optional segments and argument segments to match up the optional arguments.
+   optionalIndiceSegments.forEach(function (optionalIndices, index) {
+      availableArgsSegment = availableArgsSegments[index];
       i = 0;
-      availableArgsChunk.forEach(function (argIndex) {
+      availableArgsSegment.forEach(function (argIndex) {
          arg = args[argIndex]
          // Skip forward until we find an optional expected argument that matches.
          while (!isOfType(arg, expected[optionalIndices[i]]) && i < optionalIndices.length) {
@@ -187,6 +142,88 @@ var shiftArguments_ = function (expected, args, minimum) {
    });
 
    return shiftedArgs;
+};
+
+/**
+ * Checks if the current argument should be left for an optional argument.
+ * @param {Array} expected
+ * @param {number} expectedIndex
+ * @param {?} value
+ * @returns {bool}
+ * @private
+ */
+var checkIfShouldLeaveArgument_ = function (expected, expectedIndex, actual, actualIndex) {
+   // Check how many optional types in front of this argument that match the current value.
+   var consecutiveOptionals = countTrailingOptionals_(expected, expectedIndex, actual[actualIndex]);
+
+   // Check how many required types are behind this argument that match the current value. We
+   // will then use this value to determine if the current argument can be allowed to fill an
+   // optional spot instead of a required one.
+   var matchingRequires = countLeadingMatchingRequires_(expected, expectedIndex,
+         actual[actualIndex]);
+
+   // Now that we have found the consecutive matching types, more forward through the arguments
+   // to see if there are enough to fill the option types.
+   var matchesRequired = 1 + matchingRequires;
+   var availableDistance = matchingRequires + consecutiveOptionals;
+
+   // Determine if there are enough optional arguments.
+   var i = actualIndex - 1;
+   var type = expected[expectedIndex];
+   while (i >= 0 && availableDistance > 0 && matchesRequired > 0) {
+      if (isOfType(actual[i], type)) {
+         matchesRequired--;
+      }
+      availableDistance--;
+      i--;
+   }
+   return matchesRequired <= 0;
+};
+
+/**
+ * Counts the number of trailing, consecutive optional arguments.
+ * @param {Array} expected
+ * @param {number} expectedIndex
+ * @param {?} value
+ * @returns {number}
+ * @private
+ */
+var countTrailingOptionals_ = function (expected, expectedIndex, value) {
+   var i = expectedIndex + 1;
+   var matchingOptionals = 0;
+   var inBetweenOptionals = 0;
+   var tmpInBetween = 0;
+   while (i < expected.length && isOptionalType(expected[i])) {
+      if (isOfType(value, expected[i])) {
+         matchingOptionals++;
+         inBetweenOptionals += tmpInBetween;
+         tmpInBetween = 0;
+      } else {
+         tmpInBetween++;
+      }
+      i++;
+   }
+   return matchingOptionals + inBetweenOptionals;
+};
+
+/**
+ * Counts the number of leading required arguments.
+ * @param {Array} expected
+ * @param {number} expectedIndex
+ * @param {?} value
+ * @returns {number}
+ * @private
+ */
+var countLeadingMatchingRequires_ = function (expected, expectedIndex, value) {
+   var i = expectedIndex - 1;
+   var matchingRequires = 0
+   while (i >= 0) {
+      if (!isOptionalType(expected[i]) && isOfType(value, expected[i])) {
+         matchingRequires++;
+      }
+      i--;
+   }
+   return matchingRequires;
 };
 
 /**
