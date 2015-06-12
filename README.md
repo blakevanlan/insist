@@ -29,7 +29,7 @@ Just put the desired types in an array.
 ```javascript
 var insist = require('insist-types');
 
-var foo = function (arg1) {
+var foo = function (arg1, arg2) {
    insist.args(arguments, [String, Boolean, Object], String);
    // ...
 };
@@ -101,7 +101,7 @@ foo([1]); // works!
 foo([1, [2, 3]]); // works!
 foo([1, [2, 3, [4]]]); // throws error
 ```
-To handle the last case, you can just use an array instead.
+To handle the last case (`foo([1, [2, 3, [4]]]);`), you can just use an array instead.
 ```javascript
 var insist = require('insist-types');
 
