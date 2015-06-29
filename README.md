@@ -149,7 +149,6 @@ var fn = function (arg1) {
 fn(new Foo()); // works!
 ```
 
-
 ### Anything
 Sometimes it's handy to have a definition that'll take anything.
 ```javascript
@@ -170,6 +169,44 @@ foo(); // throws error
 ```
 I've debated a lot about whether `null` and `undefined` should be include in `insist.anything`. Currently, `null` is acceptable and `undefined` is not because I've found this to be the most useful `anything`. Open an issue if you have some input!
 
+### Type
+It can be valuable to assert that a parameter is actually a type.
+```javascript
+var insist = require('insist-types');
+
+foo = function (arg1) {
+   insist.args(arguments, insist.type());
+   // ...
+};
+
+foo(String); // works!
+foo(null); // works!
+foo(undefined); // works!
+foo(insist.arrayOf(Number)); // works!
+foo("bar"); // throws error
+```
+
+### Enum
+```javascript
+var insist = require('insist-types');
+
+Colors = {
+  RED: "red",
+  GREEN: "green",
+  BLUE: "blue" 
+};
+
+foo = function (arg1) {
+   insist.args(arguments, insist.enum(Colors));
+   // ...
+};
+
+foo(Colors.GREEN); // works!
+foo("red"); // works!
+foo("yellow"); // throws error
+foo(Colors); // throws error
+```
+
 ## Deloyment Note
 When the `NODE_ENV` is set to `production`, all of the asserts will actually be turned off for performance, unless `INSIST_IN_PROD` is set to `true`.
 
@@ -188,3 +225,8 @@ insist.nullable(type) // used for creating a nullable type
 insist.optional() // used for creating an optional type
 insist.anything() // used for a type that can be anything
 ```
+
+## Changelist
+#### 1.1.0
+* Added support for checking for types (insist.type)
+* Added support for enums

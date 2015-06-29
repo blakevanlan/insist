@@ -277,6 +277,7 @@ var isType = function (type) {
 var isValidType = function (type) {
    if (type === null) return true;
    if (type === undefined) return true;
+   if (type instanceof AnyType) return true;
    if (type instanceof Array) {
       // An array is only valid if it contains one or more valid types.
       if (!type.length) return false;
@@ -286,6 +287,7 @@ var isValidType = function (type) {
       return true;
    }
    if (type instanceof ArrayOf) return isValidType(type.type);
+   if (type instanceof EnumType) return (type.enumerable instanceof Object);
    return (type instanceof Function);
 };
 
@@ -377,7 +379,24 @@ var getNameForType = function (type) {
  * @return {boolean}
 **/
 var isOfType = function (value, type) {
-   // Check if this type is asserting an array of objects.
+   // Check if this type is asserting a type.
+   if (type instanceof AnyType) {
+      return isValidType(value);
+   }
+
+   // Check if this type is asserting an enum.
+   if (type instanceof EnumType) {
+      for (var key in type.enumerable) {
+         if (type.enumerable.hasOwnProperty(key)) {
+            if (type.enumerable[key] === value) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   // Check if this type is asserting a typed array.
    if (type instanceof ArrayOf) {
       if (!(value instanceof Array)) return false;
       for (var i = 0; i < value.length; i++) {
@@ -415,6 +434,13 @@ function ArrayOf (type) {
    this.type = type;
 };
 
+function AnyType () {
+};
+
+function EnumType (enumerable) {
+   this.enumerable = enumerable;
+};
+
 var insist = {
    args: args,
    ofType: ofType,
@@ -425,6 +451,8 @@ var insist = {
    getNameForValue: getNameForValue,
    isOfType: isOfType,
    ArrayOf: ArrayOf,
+   Type: AnyType,
+   Enum: EnumType,
    arrayOf: function (type) {
       return new ArrayOf(type);
    },
@@ -436,6 +464,12 @@ var insist = {
    },
    optional: function (type) {
       return [type, undefined, null];
+   },
+   type: function (type) {
+      return new AnyType()
+   },
+   enum: function (enumerable) {
+      return new EnumType(enumerable)
    }
 };
 

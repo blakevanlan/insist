@@ -377,3 +377,38 @@ describe "insist", ->
 
       it "should not allow undefined", ->
          expect(insist.isOfType(undefined, insist.anything())).to.be.false
+
+   describe "type", ->
+
+      it "should allow function types", ->
+         expect(insist.isOfType(String, insist.type())).to.be.true
+      
+      it "should allow null", ->
+         expect(insist.isOfType(null, insist.type())).to.be.true
+
+      it "should allow undefined", ->
+         expect(insist.isOfType(undefined, insist.type())).to.be.true
+
+      it "should allow arrayOf", ->
+         expect(insist.isOfType(insist.arrayOf(String), insist.type())).to.be.true
+
+      it "should allow multiple types", ->
+         expect(insist.isOfType([Number, Object], insist.type())).to.be.true
+
+      it "should pass the type check", ->
+         expect(insist.isValidType(insist.type())).to.be.true
+
+   describe "enum", ->
+
+      Colors = {BLUE: "blue", GREEN: "green", YELLOW: "yellow"}
+
+      it "should allow values in the enum", ->
+         expect(insist.isOfType(Colors.BLUE, insist.enum(Colors))).to.be.true
+
+      it "should not allow values not in the enum", ->
+         expect(insist.isOfType("red", insist.enum(Colors))).to.be.false
+         expect(insist.isOfType(null, insist.enum(Colors))).to.be.false
+         expect(insist.isOfType(["green"], insist.enum(Colors))).to.be.false
+
+      it "should pass the type check", ->
+         expect(insist.isValidType(insist.enum(Colors))).to.be.true
