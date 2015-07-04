@@ -1,3 +1,17 @@
+(function () {
+var root = this;
+var previousInstance = root.insist;
+var isDisabled = false;
+
+// Return the existing instance if already on global scope.
+if (root.insist) return root.insist;
+
+// Set the isDisabled flag if in production.
+if (typeof process !== 'undefined') {
+   if (process.env) {
+      isDisabled = process.env.NODE_ENV === 'production' && process.env.INSIST_IN_PROD !== 'true';
+   }
+}
 
 /**
  * Asserts that the arguments supplied are what's expected. If an argument can be multiples
@@ -23,8 +37,7 @@ var args = function (args) {
    };
    // Exit early if in production, INSIST_IN_PROD is not equal to true and there are no optional
    // options.
-   if (process.env.NODE_ENV === 'production' && process.env.INSIST_IN_PROD !== 'true' &&
-         !hasOptionalTypes) {
+   if (isDisabled && !hasOptionalTypes) {
       return [];
    }
 
@@ -351,7 +364,7 @@ var getNameForValue = function (value) {
 **/
 var getNameForType = function (type) {
    if (type === undefined) return 'undefined';
-   if (type === null) return "null";
+   if (type === null) return 'null';
 
    // Create a list of all the possible types.
    if (type instanceof Array) {
@@ -441,44 +454,61 @@ function EnumType (enumerable) {
    this.enumerable = enumerable;
 };
 
-var insist = {
-   args: args,
-   ofType: ofType,
-   isType: isType,
-   isValidType: isValidType,
-   isOptionalType: isOptionalType,
-   getNameForType: getNameForType,
-   getNameForValue: getNameForValue,
-   isOfType: isOfType,
-   ArrayOf: ArrayOf,
-   Type: AnyType,
-   Enum: EnumType,
-   arrayOf: function (type) {
-      return new ArrayOf(type);
-   },
-   nullable: function (type) {
-      return [type, null];
-   },
-   anything: function () {
-      return [Object, String, Number, Boolean, null];
-   },
-   optional: function (type) {
-      return [type, undefined, null];
-   },
-   type: function (type) {
-      return new AnyType()
-   },
-   enum: function (enumerable) {
-      return new EnumType(enumerable)
+var noop = function () {};
+var insist = function (options) {
+   options = options || {};
+
+   // Handle isDisabled option.
+   if (options.isDisabled == true) {
+      isDisabled = true;
+      // We can't noop inist.args because it can be used to shift arguments when dealing with
+      // optional arguments.
+      insist.ofType = noop;
+      insist.isType = noop;
+   } else {
+      isDisabled = false;
+      insist.ofType = ofType;
+      insist.isType = isType;
    }
+   return insist;
 };
 
-if (process.env.NODE_ENV === 'production' && process.env.INSIST_IN_PROD !== 'true') {
-   // We can't noop inist.args because it can be used to shift arguments when dealing with optional
-   // arguments.
-   var noop = function () {};
-   insist.ofType = noop;
-   insist.isType = noop;
+// Added the API methods.
+insist.args = args;
+insist.ofType = ofType;
+insist.isType = isType;
+insist.isValidType = isValidType;
+insist.isOptionalType = isOptionalType;
+insist.getNameForType = getNameForType;
+insist.getNameForValue = getNameForValue;
+insist.isOfType = isOfType;
+insist.ArrayOf = ArrayOf;
+insist.Type = AnyType;
+insist.Enum = EnumType;
+insist.arrayOf = function (type) {
+   return new ArrayOf(type);
+};
+insist.nullable = function (type) {
+   return [type, null];
+};
+insist.anything = function () {
+   return [Object, String, Number, Boolean, null];
+};
+insist.optional = function (type) {
+   return [type, undefined, null];
+};
+insist.type = function (type) {
+   return new AnyType()
+};
+insist.enum = function (enumerable) {
+   return new EnumType(enumerable)
+};
+
+// Export the script.
+if (typeof module !== 'undefined') {
+   module.exports = insist;
+} else {
+   root = insist;
 }
 
-module.exports = insist;
+}).call(this);
