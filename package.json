@@ -1,6 +1,6 @@
 {
   "name": "insist-types",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Insist on types!",
   "main": "index.js",
   "devDependencies": {

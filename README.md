@@ -7,6 +7,7 @@ Insist on types! Make your code more readable by explicitly requiring type for f
 ```bash
 npm install insist-types
 ```
+Supports both Node and the browser. On the browser, exported as `window.insist`.
 
 ## Basic Usage
 ```javascript
@@ -207,8 +208,16 @@ foo("yellow"); // throws error
 foo(Colors); // throws error
 ```
 
-## Deloyment Note
-When the `NODE_ENV` is set to `production`, all of the asserts will actually be turned off for performance, unless `INSIST_IN_PROD` is set to `true`.
+## Options
+You can set options on insist.
+```javascript
+insist({isDisabled: true});
+// or
+var insist = require('insist')({isDisabled: true});
+```
+### Available Options
+#### isDisabled
+When set to `true`, all asserts are set to noops, except for `insist.args`, which checks for optional expected types (so as to not break argument shifting). In Node, when `NODE_ENV` is set to `production`, isDisabled is set to true by default, unless `INSIST_IN_PROD` is set to `true`.
 
 ## Full API
 ```javascript
@@ -224,9 +233,16 @@ insist.arrayOf(type) // used for creating an array type
 insist.nullable(type) // used for creating a nullable type
 insist.optional() // used for creating an optional type
 insist.anything() // used for a type that can be anything
+insist.type() // used for a type that expects a type
+insist.enum(SomeEnumObject) // used for creating an enum type
 ```
 
 ## Changelist
+#### 1.2.0
+* Added browser support, now exports to window.insist when module doesn't exist
+* Added option support
+* Added isDisabled option to explicitly enable or disable (useful for browser environments)
+
 #### 1.1.0
 * Added support for checking for types (insist.type)
 * Added support for enums

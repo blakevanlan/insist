@@ -415,7 +415,6 @@ describe "insist", ->
          it "should pass the type check", ->
             expect(insist.isValidType(insist.enum(Colors))).to.be.true
 
-
    describe "options", ->
 
       describe "isDisabled", ->
