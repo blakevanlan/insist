@@ -238,6 +238,9 @@ insist.enum(SomeEnumObject) // used for creating an enum type
 ```
 
 ## Changelist
+#### 1.2.1
+* Fixed bug with exporting to browser
+
 #### 1.2.0
 * Added browser support, now exports to window.insist when module doesn't exist
 * Added option support

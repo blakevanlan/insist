@@ -508,7 +508,7 @@ insist.enum = function (enumerable) {
 if (typeof module !== 'undefined') {
    module.exports = insist;
 } else {
-   root = insist;
+   root.insist = insist;
 }
 
 }).call(this);
