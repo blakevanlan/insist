@@ -1,4 +1,4 @@
-insist = require("./index")
+insist = require("../index")
 expect = require("chai").expect
 
 describe "insist", ->

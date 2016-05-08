@@ -10,8 +10,8 @@
     "mocha": "^2.2.5"
   },
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register test.coffee",
-    "test-coverage": "mocha --compilers coffee:coffee-script/register test.coffee --require blanket -R html-cov > coverage.html; /usr/bin/open -a \"/Applications/Google Chrome.app\" coverage.html"
+    "test": "mocha --recursive --compilers coffee:coffee-script/register",
+    "test-coverage": "mocha --recursive --compilers coffee:coffee-script/register --require blanket -R html-cov > coverage.html; /usr/bin/open -a \"/Applications/Google Chrome.app\" coverage.html"
   },
   "repository": {
     "type": "git",
