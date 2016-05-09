@@ -301,7 +301,7 @@ var isValidType = function (type) {
    }
    if (type instanceof ArrayOf) return isValidType(type.type);
    if (type instanceof EnumType) return (type.enumerable instanceof Object);
-   return (type instanceof Function);
+   return (type instanceof Object);
 };
 
 /**

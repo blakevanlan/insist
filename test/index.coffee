@@ -170,7 +170,7 @@ describe "insist", ->
             expect(insist.isValidType(new insist.ArrayOf(Boolean))).to.be.true
 
          it "should return false if ArrayOf is supplied with invalid inner type", ->
-            expect(insist.isValidType(new insist.ArrayOf({}))).to.be.false
+            expect(insist.isValidType(new insist.ArrayOf(true))).to.be.false
 
       describe "isOptionalType", ->
 
