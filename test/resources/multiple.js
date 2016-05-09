@@ -6,4 +6,5 @@ function Foo(str, num) {
 function Bar() {
    insist.args(arguments);
    var c = 'd';
+   insist.ofType(c, String);
 };
