@@ -219,6 +219,29 @@ var insist = require('insist')({isDisabled: true});
 #### isDisabled
 When set to `true`, all asserts are set to noops, except for `insist.args`, which checks for optional expected types (so as to not break argument shifting). In Node, when `NODE_ENV` is set to `production`, isDisabled is set to true by default, unless `INSIST_IN_PROD` is set to `true`.
 
+## Remover
+It's recommended that insist is removed from production code, especially client-side JavaScript, for both size and efficiency. The Remover class makes this simple. It is worth noting, before removing a reference, the reference is checked to make sure that it is not being used to shift arguments. If it is, the reference will not be removed.
+```javascript
+var source = fs.readFileSync('source/file.js').toString();
+var remover = new Remover();
+var newSource remover.removeInsist(source);
+fs.writeFileSync('source/out.js', newSource);
+``` 
+
+### Options
+Currently, there is only one option for the remover: _aliases_. This option allows for when insist methods of been aliased to something else in a codebase.
+```javascript
+var source = fs.readFileSync('source/file.js').toString();
+var remover = new Remover({
+  aliases: {
+    args: 'assertArgs',
+    ofType: 'assertOfType'
+  }
+});
+var newSource remover.removeInsist(source);
+fs.writeFileSync('source/out.js', newSource);
+``` 
+
 ## Full API
 ```javascript
 insist.args(arguments, types...) // asserts the type of an arguments object and returns the shifted arguments
@@ -235,9 +258,17 @@ insist.optional() // used for creating an optional type
 insist.anything() // used for a type that can be anything
 insist.type() // used for a type that expects a type
 insist.enum(SomeEnumObject) // used for creating an enum type
+
+insist.Remover // used to remove references from source
+insist.Remover.prototype.removeInsist(source) // removes references
 ```
 
 ## Changelist
+
+#### 1.3.0
+* Adds insist.Remover for removing references from source. Recommended to be used before shipping code to production.
+* Relaxed restriction that types must be functions. Fixes #2.
+
 #### 1.2.1
 * Fixed bug with exporting to browser
 
