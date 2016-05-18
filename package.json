@@ -3,6 +3,14 @@
   "version": "1.3.0",
   "description": "Insist on types!",
   "main": "index.js",
+  "bin": {
+    "insist-types": "bin/insist-types"
+  },
+  "dependencies": {
+    "argparse": "1.0.7",
+    "async": "1.5.2",
+    "recursive-readdir": "2.0.0"
+  },
   "devDependencies": {
     "blanket": "^1.1.7",
     "chai": "^2.3.0",

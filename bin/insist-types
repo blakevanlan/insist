@@ -1,0 +1,152 @@
+#!/usr/bin/env node
+
+var fs = require('fs');
+var ArgumentParser = require('argparse').ArgumentParser;
+var Remover = require('../lib/remover');
+var recursiveReaddir = require('recursive-readdir');
+var Async = require('async');
+
+var initialize = exports.initialize = function() {
+  var cli = new ArgumentParser({
+    prog: 'insist-types',
+    version: require('../package.json').version,
+    addHelp: true,
+    description: 'Removes insist-types from matching files.'
+  });
+
+  cli.addArgument(['-i', '--include'], {
+    help: 'Adds the directory or file to be included in the processing. At least one required.',
+    metavar: 'DIR|FILE',
+    action: 'append',
+    nargs: '*',
+    required: true
+  });
+
+  cli.addArgument(['-a', '--argsAlias'], {
+    help: 'Specifies the alias for insist.args. ' +
+      'Defaults to \'insist.args\'.',
+    metavar: 'STRING',
+    defaultValue: 'insist.args'
+  });
+
+  cli.addArgument(['-t', '--ofTypeAlias'], {
+    help: 'Specifies the alias for insist.ofType. ' +
+      'Defaults to \'insist.ofType\'.',
+    metavar: 'STRING',
+    defaultValue: 'insist.ofType'
+  });
+
+  return cli;
+};
+
+var execute = exports.execute = function(logger, callback) {
+   var cli = initialize();
+   var args = cli.parseArgs();
+   var results = classifyArgs(args.include);
+   var aliases = {
+      args: args.argsAlias,
+      ofType: args.ofTypeAlias
+   };
+   describe(logger, results, aliases);
+   removeInPlace(logger, results, aliases, function(err) {
+      process.exit(err ? 1 : 0);
+   });
+};
+
+var classifyArgs = function(filesOrDirectories) {
+   filesOrDirectories = flatten(filesOrDirectories);
+   var results = [];
+   for (var i = 0; i < filesOrDirectories.length; i++) {
+      var fileOrDirectory = filesOrDirectories[i];
+      var type = null;
+      try {
+         var stats = fs.lstatSync(fileOrDirectory);
+         type = stats.isFile() ? 'file' : 'directory';
+      } catch (e) {
+         type = 'invalid';
+      }
+      results.push({
+         path: fileOrDirectory,
+         type: type
+      });
+   }
+   return results;
+}
+
+var describe = function(logger, classifiedFilesAndDirectories, aliases) {
+   logger.log('\nIncluded directories:');
+
+   for (var i = 0; i < classifiedFilesAndDirectories.length; i++) {
+      if (classifiedFilesAndDirectories[i].type == 'directory') {
+         logger.log('  ' + classifiedFilesAndDirectories[i].path);     
+      }
+   }
+
+   logger.log('\nIncluded files:');
+
+   for (var i = 0; i < classifiedFilesAndDirectories.length; i++) {
+      if (classifiedFilesAndDirectories[i].type == 'directory') {
+         logger.log('  ' + classifiedFilesAndDirectories[i].path);     
+      }
+   }
+
+   logger.log('\nAliases:');
+
+   logger.log('  insist.args -> ' + aliases.args);
+   logger.log('  insist.ofType -> ' + aliases.ofType);
+   logger.log('');
+};
+
+var removeInPlace = function(logger, classifiedFilesAndDirectories, aliases, callback) {
+   var remover = new Remover({ aliases: aliases });
+   var filesToProcess = [];
+   var queue = Async.queue(function(file, callback) {
+      removeFromFile(remover, file, function(err) {
+         if (err) {
+            logger.log('  Failed to process: ' + file);
+         } else {
+            callback();
+         }
+      });
+   }, 10);
+
+   logger.log('Removing insist-types...');
+
+   queue.drain = function() {
+      logger.log('Done. Checked ' + filesToProcess.length + ' files.');
+      callback();
+   };
+
+   for (var i = 0; i < classifiedFilesAndDirectories.length; i++) {
+      if (classifiedFilesAndDirectories[i].type == 'file') {
+         queue.push(classifiedFilesAndDirectories[i].path)
+      } else if (classifiedFilesAndDirectories[i].type == 'directory') {
+         (function(directory) {
+            recursiveReaddir(directory, filesToProcess, function(err, files) {
+               if (err) {
+                  logger.log('  Failed to process: ' + directory);
+               }
+               filesToProcess = filesToProcess.concat(files);
+               for (var i = 0; i < files.length; i++) {
+                  queue.push(files[i]);
+               }
+            });
+         })(classifiedFilesAndDirectories[i].path);
+      } 
+   }
+};
+
+var removeFromFile = function(remover, file, callback) {
+   fs.readFile(file, 'utf8', function (err, source) {
+      if (err) return callback(err);
+      var newSource = remover.removeInsist(source);
+      if (newSource.length != source.length) {
+         fs.writeFile(file, newSource, callback);
+      } else {
+         callback();
+      }
+   });
+};
+
+var flatten = function(arr) { return [].concat.apply([], arr); };
+if (require.main === module) { execute(console); }
