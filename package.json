@@ -15,7 +15,9 @@
     "blanket": "^1.1.7",
     "chai": "^2.3.0",
     "coffee-script": "^1.9.3",
-    "mocha": "^2.2.5"
+    "mocha": "^2.2.5",
+    "ncp": "^2.0.0",
+    "rmrf": "^1.0.2"
   },
   "scripts": {
     "test": "mocha --recursive --compilers coffee:coffee-script/register",

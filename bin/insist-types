@@ -48,9 +48,7 @@ var execute = exports.execute = function(logger, callback) {
       ofType: args.ofTypeAlias
    };
    describe(logger, results, aliases);
-   removeInPlace(logger, results, aliases, function(err) {
-      process.exit(err ? 1 : 0);
-   });
+   removeInPlace(logger, results, aliases, callback);
 };
 
 var classifyArgs = function(filesOrDirectories) {
@@ -74,22 +72,40 @@ var classifyArgs = function(filesOrDirectories) {
 }
 
 var describe = function(logger, classifiedFilesAndDirectories, aliases) {
-   logger.log('\nIncluded directories:');
-
+   var files = [];
+   var directories = [];
+   var invalidPathes = [];
    for (var i = 0; i < classifiedFilesAndDirectories.length; i++) {
       if (classifiedFilesAndDirectories[i].type == 'directory') {
-         logger.log('  ' + classifiedFilesAndDirectories[i].path);     
+         directories.push(classifiedFilesAndDirectories[i].path);
+      } else if (classifiedFilesAndDirectories[i].type == 'file') {
+         files.push(classifiedFilesAndDirectories[i].path);
+      } else if (classifiedFilesAndDirectories[i].type == 'invalid') {
+         invalidPathes.push(classifiedFilesAndDirectories[i].path);
       }
    }
 
-   logger.log('\nIncluded files:');
-
-   for (var i = 0; i < classifiedFilesAndDirectories.length; i++) {
-      if (classifiedFilesAndDirectories[i].type == 'directory') {
-         logger.log('  ' + classifiedFilesAndDirectories[i].path);     
+   if (directories.length) {
+      logger.log('\nIncluded directories:');
+      for (var i = 0; i < directories.length; i++) {
+         logger.log('  ' + directories[i]);
       }
    }
 
+   if (files.length) {
+      logger.log('\nIncluded files:');
+      for (var i = 0; i < files.length; i++) {
+         logger.log('  ' + files[i]);
+      }
+   }
+
+   if (invalidPathes.length) {
+      logger.log('\nInvalid pathes:');
+      for (var i = 0; i < invalidPathes.length; i++) {
+         logger.log('  ' + invalidPathes[i]);
+      }
+   }
+   
    logger.log('\nAliases:');
 
    logger.log('  insist.args -> ' + aliases.args);
@@ -149,4 +165,9 @@ var removeFromFile = function(remover, file, callback) {
 };
 
 var flatten = function(arr) { return [].concat.apply([], arr); };
-if (require.main === module) { execute(console); }
+
+if (require.main === module) {
+   execute(console, function(err) {
+      process.exit(err ? 1 : 0);
+   });
+}
