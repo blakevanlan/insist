@@ -242,6 +242,29 @@ var newSource remover.removeInsist(source);
 fs.writeFileSync('source/out.js', newSource);
 ``` 
 
+### CLI
+The remover is also available through the CLI. 
+```bash
+usage: insist-types [-h] [-v] -i [DIR|FILE [DIR|FILE ...]] [-a STRING]
+                    [-t STRING]
+                    
+
+Removes insist-types from matching files.
+
+Optional arguments:
+  -h, --help            Show this help message and exit.
+  -v, --version         Show program's version number and exit.
+  -i [DIR|FILE [DIR|FILE ...]], --include [DIR|FILE [DIR|FILE ...]]
+                        Adds the directory or file to be included in the 
+                        processing. At least one required.
+  -a STRING, --argsAlias STRING
+                        Specifies the alias for insist.args. Defaults to 
+                        'insist.args'.
+  -t STRING, --ofTypeAlias STRING
+                        Specifies the alias for insist.ofType. Defaults to 
+                        'insist.ofType'.
+```
+
 ## Full API
 ```javascript
 insist.args(arguments, types...) // asserts the type of an arguments object and returns the shifted arguments
@@ -264,6 +287,9 @@ insist.Remover.prototype.removeInsist(source) // removes references
 ```
 
 ## Changelist
+
+#### 1.4.0
+* Added CLI for insist.Remover
 
 #### 1.3.0
 * Adds insist.Remover for removing references from source. Recommended to be used before shipping code to production.
