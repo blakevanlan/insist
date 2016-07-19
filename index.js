@@ -504,6 +504,15 @@ insist.enum = function (enumerable) {
    return new EnumType(enumerable)
 };
 
+// Export Remover.
+if (typeof require !== 'undefined') {
+   try {
+      insist.Remover = require('./lib/remover');
+   } catch (e) {
+      // Swallow the error.      
+   }
+}
+
 // Export the script.
 if (typeof module !== 'undefined') {
    module.exports = insist;

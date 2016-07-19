@@ -288,6 +288,9 @@ insist.Remover.prototype.removeInsist(source) // removes references
 
 ## Changelist
 
+#### 1.4.1
+* Properly exported insist.Remover
+
 #### 1.4.0
 * Added CLI for insist.Remover
 
