@@ -288,6 +288,9 @@ insist.Remover.prototype.removeInsist(source) // removes references
 
 ## Changelist
 
+#### 1.4.2
+* Fixed bug with cyclical references
+
 #### 1.4.1
 * Properly exported insist.Remover
 
