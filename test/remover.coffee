@@ -22,6 +22,12 @@ describe "remover", ->
       expected = "function Foo(str, num) {\n   var a = 'b';\n};\n\nfunction Bar(str, fn) {\n   var args = insist.args(arguments, insist.optional(String), Function);\n   var c = 'd';\n};\n"
       expect(result).to.equal(expected);
 
+   it "should only remove references that are calling the method", ->
+      remover = new Remover()
+      result = remover.removeInsist(fs.readFileSync("./test/resources/referenced.js").toString())
+      expected = "function Foo(str, num) {\n   console.log(insist.args);\n};\n";
+      expect(result).to.equal(expected);
+
    describe "options", ->
 
       it "should remove aliased references", ->
