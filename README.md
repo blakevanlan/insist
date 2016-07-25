@@ -222,8 +222,9 @@ When set to `true`, all asserts are set to noops, except for `insist.args`, whic
 ## Remover
 It's recommended that insist is removed from production code, especially client-side JavaScript, for both size and efficiency. The Remover class makes this simple. It is worth noting, before removing a reference, the reference is checked to make sure that it is not being used to shift arguments. If it is, the reference will not be removed.
 ```javascript
+var insist = require('insist-types');
 var source = fs.readFileSync('source/file.js').toString();
-var remover = new Remover();
+var remover = new insist.Remover();
 var newSource remover.removeInsist(source);
 fs.writeFileSync('source/out.js', newSource);
 ``` 
@@ -231,8 +232,9 @@ fs.writeFileSync('source/out.js', newSource);
 ### Options
 Currently, there is only one option for the remover: _aliases_. This option allows for when insist methods of been aliased to something else in a codebase.
 ```javascript
+var insist = require('insist-types');
 var source = fs.readFileSync('source/file.js').toString();
-var remover = new Remover({
+var remover = new insist.Remover({
   aliases: {
     args: 'assertArgs',
     ofType: 'assertOfType'
@@ -287,6 +289,9 @@ insist.Remover.prototype.removeInsist(source) // removes references
 ```
 
 ## Changelist
+
+#### 1.4.3
+* Fixed bug where references that were not calls were still being removed.
 
 #### 1.4.2
 * Fixed bug with cyclical references
